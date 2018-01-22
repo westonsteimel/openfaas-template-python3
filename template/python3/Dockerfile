@@ -15,7 +15,8 @@ COPY requirements.txt .
 WORKDIR /build
 
 RUN apk add --no-cache build-base && \
-    pip install --no-cache-dir -t . -r requirements.txt
+    pip install --no-cache-dir -t . -r requirements.txt && \
+    apk del --no-cache build-base
 
 FROM python:3-alpine
 
