@@ -1,22 +1,26 @@
 FROM python:3-alpine as builder
 
-# Alternatively use ADD https:// (which will not be cached by Docker builder)
-RUN apk --no-cache add curl \ 
-    && echo "Pulling watchdog binary from Github." \
-    && curl -sSL https://github.com/openfaas/faas/releases/download/0.6.9/fwatchdog > /usr/bin/fwatchdog \
-    && chmod +x /usr/bin/fwatchdog \
-    && apk del curl --no-cache
-
-RUN apk add --no-cache build-base
+WORKDIR /build
 
 COPY index.py .
 COPY requirements.txt .
+COPY function function/
 
-WORKDIR /build
+RUN touch ./function/__init__.py
 
-RUN apk add --no-cache build-base && \
-    pip install --no-cache-dir -t . -r requirements.txt && \
-    apk del --no-cache build-base
+COPY function/requirements.txt	.
+
+# Alternatively use ADD https:// (which will not be cached by Docker builder)
+RUN apk --no-cache add --virtual .build-dependencies \
+    curl \
+    build-base \
+    && echo "Pulling watchdog binary from Github." \
+    && curl -sSL https://github.com/openfaas/faas/releases/download/0.6.9/fwatchdog > /usr/bin/fwatchdog \
+    && chmod +x /usr/bin/fwatchdog \
+    && pip install --no-cache-dir -t ./function/ -r requirements.txt \
+    && pip install --no-cache-dir -t ./function/ -r ./function/requirements.txt \
+    && apk --no-cache del --purge .build-dependencies \
+    && rm -rf /var/cache/*
 
 FROM python:3-alpine
 
@@ -25,12 +29,12 @@ RUN addgroup -S app && adduser -S -g app app
 RUN mkdir -p /home/app
 RUN chown app /home/app
 
+USER app
+
 WORKDIR /home/app
 
 COPY --from=builder /build .
-COPY --from=builder /usr/bin/fwatchdog .
-
-USER app
+COPY --from=builder /usr/bin/fwatchdog /usr/bin/fwatchdog
 
 ENV fprocess="python3 index.py"
 
