@@ -10,12 +10,11 @@ RUN touch ./function/__init__.py
 
 COPY function/requirements.txt	.
 
-# Alternatively use ADD https:// (which will not be cached by Docker builder)
 RUN apk --no-cache add --virtual .build-dependencies \
     curl \
     build-base \
     && echo "Pulling watchdog binary from Github." \
-    && curl -sSL https://github.com/openfaas/faas/releases/download/0.6.9/fwatchdog > /usr/bin/fwatchdog \
+    && curl -sSL https://github.com/openfaas/faas/releases/download/0.8.0/fwatchdog > /usr/bin/fwatchdog \
     && chmod +x /usr/bin/fwatchdog \
     && pip install --no-cache-dir -t ./function/ -r requirements.txt \
     && pip install --no-cache-dir -t ./function/ -r ./function/requirements.txt \
