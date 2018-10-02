@@ -14,11 +14,11 @@ RUN apk --no-cache add --virtual .build-dependencies \
     curl \
     build-base \
     && echo "Pulling watchdog binary from Github." \
-    && curl -sSL https://github.com/openfaas/faas/releases/download/0.8.0/fwatchdog > /usr/bin/fwatchdog \
+    && curl -sSL https://github.com/openfaas/faas/releases/download/0.9.6/fwatchdog > /usr/bin/fwatchdog \
     && chmod +x /usr/bin/fwatchdog \
     && pip install --no-cache-dir -t ./function/ -r requirements.txt \
     && pip install --no-cache-dir -t ./function/ -r ./function/requirements.txt \
-    && apk --no-cache del --purge .build-dependencies \
+    && apk del --purge .build-dependencies \
     && rm -rf /var/cache/*
 
 FROM python:3-alpine
@@ -37,6 +37,6 @@ COPY --from=builder /usr/bin/fwatchdog /usr/bin/fwatchdog
 
 ENV fprocess="python3 index.py"
 
-HEALTHCHECK --interval=1s CMD [ -e /tmp/.lock ] || exit 1
+HEALTHCHECK --interval=3s CMD [ -e /tmp/.lock ] || exit 1
 
 CMD ["fwatchdog"]
